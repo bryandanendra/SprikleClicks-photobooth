@@ -1,0 +1,29 @@
+{
+  "name": "photobooth",
+  "version": "1.0.0",
+  "description": "A simple web-based photo booth application built with **React** that captures images using a webcam, applies filters, and generates a downloadable photo strip!",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd frontend && npm start",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install-deps": "npm install && cd frontend && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bryandanendra/photobooth.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bryandanendra/photobooth/issues"
+  },
+  "homepage": "https://github.com/bryandanendra/photobooth#readme",
+  "dependencies": {
+    "ogl": "^1.0.11",
+    "qrcode": "^1.5.4",
+    "uuid": "^11.1.0"
+  }
+}
