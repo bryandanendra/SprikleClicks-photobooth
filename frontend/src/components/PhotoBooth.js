@@ -14,6 +14,8 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [cameras, setCameras] = useState([]);
   const [selectedCamera, setSelectedCamera] = useState('');
+  const [cameraError, setCameraError] = useState(false);
+  const [hasUserMediaPermission, setHasUserMediaPermission] = useState(false);
 
   // Layout configurations
   const layouts = {
@@ -43,8 +45,23 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
     }
   };
 
+  // Check if device supports getUserMedia
+  const hasGetUserMedia = () => {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  };
+
   const getCameras = async () => {
+    // Reset the error state
+    setCameraError(false);
+    
     try {
+      // First check if we have permission
+      if (!hasUserMediaPermission) {
+        // Request basic camera access first to trigger permission dialog
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasUserMediaPermission(true);
+      }
+      
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setCameras(videoDevices);
@@ -54,11 +71,17 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
       }
     } catch (error) {
       console.error("Error getting camera devices:", error);
+      setCameraError(true);
     }
   };
 
   useEffect(() => {
-    getCameras();
+    // Check if browser supports getUserMedia
+    if (!hasGetUserMedia()) {
+      setCameraError(true);
+      alert("Your browser does not support camera access. Please use a modern browser like Chrome, Firefox, or Safari.");
+      return;
+    }
     
     const checkMobile = () => {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -67,11 +90,14 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
     };
     
     checkMobile();
+    
+    // Try to get initial camera access
+    getCameras();
   
     const handleVisibilityChange = () => {
-        if (!document.hidden) {
-            startCamera();
-        }
+      if (!document.hidden && hasUserMediaPermission) {
+        startCamera();
+      }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -86,41 +112,70 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
   }, [isMobile]);
 
   useEffect(() => {
-    if (selectedCamera) {
+    if (selectedCamera && hasUserMediaPermission) {
       startCamera();
     }
-  }, [selectedCamera]);
+  }, [selectedCamera, hasUserMediaPermission]);
 
   const startCamera = async () => {
     try {
-        if (videoRef.current && videoRef.current.srcObject) {
-          const tracks = videoRef.current.srcObject.getTracks();
-          tracks.forEach(track => track.stop());
-        }
+      if (videoRef.current && videoRef.current.srcObject) {
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      }
 
-        const constraints = {
-          video: {
-              deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
-              facingMode: !selectedCamera ? "user" : undefined,
-              width: { ideal: isMobile ? 1280 : 1280 }, 
-              height: { ideal: isMobile ? 720 : 720 },
-              frameRate: { ideal: 30 } 
-          }
+      setCameraError(false);
+
+      const constraints = {
+        audio: false,
+        video: {
+          deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+          facingMode: !selectedCamera ? "user" : undefined,
+          width: { ideal: isMobile ? 1280 : 1280 }, 
+          height: { ideal: isMobile ? 720 : 720 },
+          frameRate: { ideal: 30 } 
+        }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          try {
-            await videoRef.current.play();
-          } catch (err) {
-            console.error("Error playing video:", err);
-          }
-       }
-   } catch (error) {
-     console.error("Error accessing camera:", error);
-     alert("Could not access your camera. Please ensure camera permissions are granted in your browser settings.");
-   }
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+          setHasUserMediaPermission(true);
+        } catch (err) {
+          console.error("Error playing video:", err);
+          setCameraError(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      setCameraError(true);
+      
+      // Check specific error types for better user feedback
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        alert("Camera access was denied. Please allow camera access in your browser settings and try again.");
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        alert("No camera found. Please ensure your camera is connected and not in use by another application.");
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        alert("Camera is in use by another application. Please close other applications that might be using your camera.");
+      } else {
+        alert("Could not access your camera. Please ensure camera permissions are granted in your browser settings.");
+      }
+    }
+  };
+
+  // Manual camera request - can be triggered by user if automatic fails
+  const requestCameraAccess = async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      setHasUserMediaPermission(true);
+      getCameras();
+    } catch (error) {
+      console.error("Manual camera access request failed:", error);
+      setCameraError(true);
+      alert("Camera access was denied. Please check your browser settings and try again.");
+    }
   };
 
   const handleCameraChange = (e) => {
@@ -388,12 +443,17 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
             value={selectedCamera} 
             onChange={handleCameraChange} 
             className="camera-selector"
+            disabled={cameras.length === 0 || cameraError}
           >
-            {cameras.map(camera => (
-              <option key={camera.deviceId} value={camera.deviceId}>
-                {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
-              </option>
-            ))}
+            {cameras.length > 0 ? (
+              cameras.map(camera => (
+                <option key={camera.deviceId} value={camera.deviceId}>
+                  {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
+                </option>
+              ))
+            ) : (
+              <option value="">No cameras found</option>
+            )}
           </select>
         </div>
 
@@ -404,19 +464,43 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
       </div>
 
       <div className="photo-container">
-        <div className="camera-container">
-          {countdown !== null && <h2 className="countdown animate">{countdown}</h2>}
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            disablePictureInPicture 
-            disableRemotePlayback
-            className="video-feed" 
-            style={{ filter }}/>        
-          <canvas ref={canvasRef} className="hidden" />
-        </div>
+        {cameraError ? (
+          <div className="camera-error">
+            <p>Tidak dapat mengakses kamera. Ini mungkin karena:</p>
+            <ul>
+              <li>Izin kamera belum diberikan</li>
+              <li>Kamera digunakan oleh aplikasi lain</li>
+              <li>Masalah hardware atau browser</li>
+            </ul>
+            <button 
+              onClick={requestCameraAccess} 
+              className="camera-access-button"
+            >
+              Izinkan Akses Kamera
+            </button>
+            <button 
+              onClick={getCameras} 
+              className="camera-access-button"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        ) : (
+          <div className="camera-container">
+            {countdown !== null && <h2 className="countdown animate">{countdown}</h2>}
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              disablePictureInPicture 
+              disableRemotePlayback
+              className="video-feed" 
+              style={{ filter }}
+            />        
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+        )}
 
         {renderPreviewSide()}
       </div>
@@ -428,7 +512,7 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
             id="countdown-time" 
             value={countdownTime} 
             onChange={handleCountdownChange} 
-            disabled={capturing}
+            disabled={capturing || cameraError}
           >
             <option value="1">1 second</option>
             <option value="3">3 seconds</option>
@@ -438,7 +522,11 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
         </div>
 
         <div className="controls">
-          <button onClick={startCountdown} disabled={capturing} className="capture-button">
+          <button 
+            onClick={startCountdown} 
+            disabled={capturing || cameraError} 
+            className="capture-button"
+          >
             {capturing ? "Capturing..." : `Take Photos (${layouts[selectedLayout].poses} poses)`}
           </button>
         </div>
@@ -447,14 +535,14 @@ const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
       <p className="filter-prompt">Select a filter before starting photo capture!</p>
 
       <div className="filters">
-        <button onClick={() => setFilter("none")} disabled={capturing}>No Filter</button>
-        <button onClick={() => setFilter("grayscale(100%)")} disabled={capturing}>Grayscale</button>
-        <button onClick={() => setFilter("sepia(100%)")} disabled={capturing}>Sepia</button>
-        <button onClick={() => setFilter("grayscale(100%) contrast(120%) brightness(110%) sepia(30%) hue-rotate(10deg) blur(0.4px)")} disabled={capturing}>Vintage</button>
-        <button onClick={() => setFilter("brightness(130%) contrast(105%) saturate(80%) blur(0.3px)")} disabled={capturing}>Soft</button>
-        <button onClick={() => setFilter("saturate(150%) contrast(110%) brightness(110%)")} disabled={capturing}>Vivid</button>
-        <button onClick={() => setFilter("hue-rotate(180deg)")} disabled={capturing}>Invert</button>
-        <button onClick={() => setFilter("blur(3px) brightness(110%)")} disabled={capturing}>Dreamy</button>
+        <button onClick={() => setFilter("none")} disabled={capturing || cameraError}>No Filter</button>
+        <button onClick={() => setFilter("grayscale(100%)")} disabled={capturing || cameraError}>Grayscale</button>
+        <button onClick={() => setFilter("sepia(100%)")} disabled={capturing || cameraError}>Sepia</button>
+        <button onClick={() => setFilter("grayscale(100%) contrast(120%) brightness(110%) sepia(30%) hue-rotate(10deg) blur(0.4px)")} disabled={capturing || cameraError}>Vintage</button>
+        <button onClick={() => setFilter("brightness(130%) contrast(105%) saturate(80%) blur(0.3px)")} disabled={capturing || cameraError}>Soft</button>
+        <button onClick={() => setFilter("saturate(150%) contrast(110%) brightness(110%)")} disabled={capturing || cameraError}>Vivid</button>
+        <button onClick={() => setFilter("hue-rotate(180deg)")} disabled={capturing || cameraError}>Invert</button>
+        <button onClick={() => setFilter("blur(3px) brightness(110%)")} disabled={capturing || cameraError}>Dreamy</button>
       </div>
     </div>
   );

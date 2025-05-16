@@ -563,9 +563,6 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
             </div>
           )}
 
-          {/* Mondiad Native Ad Placement */}
-          <div data-mndazid="271b449a-0c81-4ef0-8379-237125f2e40e"></div>
-
         </div>
       </div>
     </div>
