@@ -3,13 +3,14 @@ import React, { useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";  
 import Home from "./components/Home";
 import Welcome from "./components/Welcome";
+import LayoutSelection from "./components/LayoutSelection";
 import PhotoBooth from "./components/PhotoBooth";
 import PhotoPreview from "./components/PhotoPreview";
-
 
 function App() {
   const [capturedImages, setCapturedImages] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [selectedLayout, setSelectedLayout] = useState("layoutA"); // Default layout
 
   const toggleMobileNav = () => {
     setIsMobileNavOpen(!isMobileNavOpen);
@@ -46,8 +47,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/welcome" element={<Welcome />} />
-          <Route path="/photobooth" element={<PhotoBooth setCapturedImages={setCapturedImages} />} />
-          <Route path="/preview" element={<PhotoPreview capturedImages={capturedImages} />} />
+          <Route path="/layout-selection" element={<LayoutSelection setSelectedLayout={setSelectedLayout} />} />
+          <Route path="/photobooth" element={<PhotoBooth setCapturedImages={setCapturedImages} selectedLayout={selectedLayout} />} />
+          <Route path="/preview" element={<PhotoPreview capturedImages={capturedImages} selectedLayout={selectedLayout} />} />
           
         </Routes>
       </div>

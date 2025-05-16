@@ -2,25 +2,71 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* G */
-const PhotoBooth = ({ setCapturedImages }) => {
+const PhotoBooth = ({ setCapturedImages, selectedLayout }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [capturedImages, setImages] = useState([]);
   const [filter, setFilter] = useState("none");
   const [countdown, setCountdown] = useState(null);
+  const [countdownTime, setCountdownTime] = useState(1); // Ubah default countdown ke 3 detik
   const [capturing, setCapturing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [cameras, setCameras] = useState([]);
+  const [selectedCamera, setSelectedCamera] = useState('');
+
+  // Layout configurations
+  const layouts = {
+    layoutA: { 
+      poses: 4, 
+      name: "Layout A",
+      description: "4 vertical photos",
+      labelId: "A"
+    },
+    layoutB: { 
+      poses: 3, 
+      name: "Layout B",
+      description: "3 vertical photos",
+      labelId: "B"
+    },
+    layoutC: { 
+      poses: 1, 
+      name: "Layout C",
+      description: "1 photo",
+      labelId: "C"
+    },
+    layoutD: { 
+      poses: 2, 
+      name: "Layout D",
+      description: "2 vertical photos",
+      labelId: "D"
+    }
+  };
+
+  const getCameras = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setCameras(videoDevices);
+      
+      if (videoDevices.length > 0 && !selectedCamera) {
+        setSelectedCamera(videoDevices[0].deviceId);
+      }
+    } catch (error) {
+      console.error("Error getting camera devices:", error);
+    }
+  };
 
   useEffect(() => {
-    startCamera();
-
+    getCameras();
+    
     const checkMobile = () => {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
       const mobileRegex = /android|ipad|iphone|ipod|windows phone/i;
       setIsMobile(mobileRegex.test(userAgent));
     };
-
+    
+    checkMobile();
   
     const handleVisibilityChange = () => {
         if (!document.hidden) {
@@ -39,18 +85,25 @@ const PhotoBooth = ({ setCapturedImages }) => {
     };
   }, [isMobile]);
 
-  // Start Camera
+  useEffect(() => {
+    if (selectedCamera) {
+      startCamera();
+    }
+  }, [selectedCamera]);
+
   const startCamera = async () => {
     try {
         if (videoRef.current && videoRef.current.srcObject) {
-            return; 
+          const tracks = videoRef.current.srcObject.getTracks();
+          tracks.forEach(track => track.stop());
         }
 
         const constraints = {
           video: {
-              facingMode: "user",
+              deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+              facingMode: !selectedCamera ? "user" : undefined,
               width: { ideal: isMobile ? 1280 : 1280 }, 
-               height: { ideal: isMobile ? 720 : 720 },
+              height: { ideal: isMobile ? 720 : 720 },
               frameRate: { ideal: 30 } 
           }
       };
@@ -70,6 +123,9 @@ const PhotoBooth = ({ setCapturedImages }) => {
    }
   };
 
+  const handleCameraChange = (e) => {
+    setSelectedCamera(e.target.value);
+  };
 
   // apply fitler using canvas api
   const applyFilterToCanvas = (sourceCanvas, filterType) => {
@@ -183,7 +239,7 @@ const PhotoBooth = ({ setCapturedImages }) => {
   };
   
 
-  // Countdown to take 4 pictures automatically
+  // Countdown to take pictures automatically based on selected layout
   const startCountdown = () => {
     if (capturing) return;
     setCapturing(true);
@@ -192,9 +248,10 @@ const PhotoBooth = ({ setCapturedImages }) => {
     
     let photosTaken = 0;
     const newCapturedImages = [];
+    const totalPoses = layouts[selectedLayout].poses;
     
     const captureSequence = async () => {
-      if (photosTaken >= 4) {
+      if (photosTaken >= totalPoses) {
         setCountdown(null);
         setCapturing(false);
 
@@ -211,11 +268,7 @@ const PhotoBooth = ({ setCapturedImages }) => {
         return;
       }
         
-  
-        
-  
-      // let timeLeft = 3;
-      let timeLeft = 1;
+      let timeLeft = countdownTime;
       setCountdown(timeLeft);
   
       const timer = setInterval(() => {
@@ -236,6 +289,11 @@ const PhotoBooth = ({ setCapturedImages }) => {
     };
   
     captureSequence();
+  };
+
+  // Handle countdown time selection
+  const handleCountdownChange = (e) => {
+    setCountdownTime(parseInt(e.target.value, 10));
   };
 
   // Capture Photo
@@ -295,12 +353,59 @@ const PhotoBooth = ({ setCapturedImages }) => {
     }
 };
 
+  // Render layout berdasarkan jenis layout
+  const renderPreviewSide = () => {
+    const layout = layouts[selectedLayout];
+    
+    // Untuk layout vertikal (semua layout sekarang vertikal)
+    return (
+      <div className={`preview-side preview-side-vertical poses-${layout.poses}`}>
+        {capturedImages.map((image, index) => (
+          <img 
+            key={index} 
+            src={image} 
+            alt={`Captured ${index + 1}`} 
+            className="side-preview"
+          />
+        ))}
+        {/* Tambahkan placeholder untuk pose yang belum diambil */}
+        {Array(layout.poses - capturedImages.length).fill(0).map((_, index) => (
+          <div 
+            key={`placeholder-${index}`} 
+            className="side-preview-placeholder"
+            data-number={capturedImages.length + index + 1}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="photo-booth">
-      {countdown !== null && <h2 className="countdown animate">{countdown}</h2>}
+      <div className="booth-header">
+        <div className="camera-settings">
+          <select 
+            value={selectedCamera} 
+            onChange={handleCameraChange} 
+            className="camera-selector"
+          >
+            {cameras.map(camera => (
+              <option key={camera.deviceId} value={camera.deviceId}>
+                {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="layout-info">
+          <h3>Layout {layouts[selectedLayout].labelId} - {layouts[selectedLayout].poses} Pose</h3>
+          <p>{layouts[selectedLayout].description}</p>
+        </div>
+      </div>
 
       <div className="photo-container">
         <div className="camera-container">
+          {countdown !== null && <h2 className="countdown animate">{countdown}</h2>}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -313,26 +418,33 @@ const PhotoBooth = ({ setCapturedImages }) => {
           <canvas ref={canvasRef} className="hidden" />
         </div>
 
-        <div className="preview-side">
-        {capturedImages.map((image, index) => (
-          <img 
-            key={index} 
-            src={image} 
-            alt={`Captured ${index + 1}`} 
-            className="side-preview"
-          />
-        ))}
-        
+        {renderPreviewSide()}
       </div>
-    </div>
       
-      <div className="controls">
-        <button onClick={startCountdown} disabled={capturing}>
-          {capturing ? "Capturing..." : "Start Capture :)"}
-        </button>
+      <div className="booth-controls">
+        <div className="countdown-selector">
+          <label htmlFor="countdown-time">Select Countdown Time:</label>
+          <select 
+            id="countdown-time" 
+            value={countdownTime} 
+            onChange={handleCountdownChange} 
+            disabled={capturing}
+          >
+            <option value="1">1 second</option>
+            <option value="3">3 seconds</option>
+            <option value="5">5 seconds</option>
+            <option value="10">10 seconds</option>
+          </select>
+        </div>
+
+        <div className="controls">
+          <button onClick={startCountdown} disabled={capturing} className="capture-button">
+            {capturing ? "Capturing..." : `Take Photos (${layouts[selectedLayout].poses} poses)`}
+          </button>
+        </div>
       </div>
 
-      <p className="filter-prompt">Choose a filter before starting capture!</p>
+      <p className="filter-prompt">Select a filter before starting photo capture!</p>
 
       <div className="filters">
         <button onClick={() => setFilter("none")} disabled={capturing}>No Filter</button>
@@ -344,7 +456,6 @@ const PhotoBooth = ({ setCapturedImages }) => {
         <button onClick={() => setFilter("hue-rotate(180deg)")} disabled={capturing}>Invert</button>
         <button onClick={() => setFilter("blur(3px) brightness(110%)")} disabled={capturing}>Dreamy</button>
       </div>
-
     </div>
   );
 };
