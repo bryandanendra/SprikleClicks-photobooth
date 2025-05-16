@@ -528,25 +528,30 @@ body {
 
 /* Improve photo strip display */
 .photo-strip {
-  margin: 30px auto;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin: 30px auto !important;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
   max-width: 100%;
   height: auto;
+  border-radius: 8px;
 }
 
-
+.photostrip-container {
+  margin: 40px auto !important;
+  padding: 20px !important;
+  background-color: transparent !important;
+  border-radius: 0;
+  box-shadow: none !important;
+}
 
 /* Fix Photo Strip Squishing */
 .photo-strip {
   display: block;
   max-width: 400px;
-  width: 100%; 
+  width: 95% !important; 
   height: auto;
-  margin-top: -10px;
-  margin-bottom: 5px;
+  margin: 20px auto !important;
   border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
 }
 
 .welcome-container {
@@ -628,7 +633,7 @@ body {
 }
 
 .welcome-container button:hover {
-  background-color: #ff69b4;
+  background-color: #3490dc;
   color: white;
   transform: scale(1.05);
 }
@@ -660,7 +665,7 @@ button {
 }
 
 button:not(:disabled):hover {
-  background: linear-gradient(135deg, #ffc0cb, #ea909f);
+  background: linear-gradient(135deg, #6cb2eb, #3490dc);
   color: white;
 }
 
@@ -672,14 +677,14 @@ button:disabled {
 }
 
 button:hover {
-  background: linear-gradient(135deg, #ffc0cb, #ea909f) !important;
+  background: linear-gradient(135deg, #6cb2eb, #3490dc) !important;
   color: white;
   transform: scale(1.05);
 }
 
 button:active {
   transform: scale(0.98);
-  background: linear-gradient(135deg, #ea909f, #ffc0cb);
+  background: linear-gradient(135deg, #3490dc, #6cb2eb);
 }
 
 /* Color Picker Options */
@@ -1571,7 +1576,8 @@ footer a:hover {
 /* Menambahkan style khusus untuk container single box */
 .single-box-container .pose-box {
   height: 40px;
-  margin-top: 40px;
+  margin-top: 5px;
+  margin-bottom: 40px;
 }
 
 /* Layout D styling (2 box) */
@@ -1582,14 +1588,16 @@ footer a:hover {
 /* Responsivitas */
 @media (max-width: 768px) {
   .layout-row {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: 16px;
   }
   
   .layout-box {
-    width: 80%;
-    max-width: 200px;
+    width: 45%;
+    max-width: 160px;
   }
   
   .layout-preview {
@@ -1603,11 +1611,12 @@ footer a:hover {
   }
   
   .layout-box {
-    width: 90%;
+    width: 45%;
+    margin: 0 5px;
   }
   
   .layout-preview {
-    min-height: 140px;
+    min-height: 120px;
   }
 }
 
@@ -1665,4 +1674,324 @@ footer a:hover {
 
 .camera-access-button:active {
   transform: scale(0.98);
+}
+
+/* Small devices (phones, up to 576px) */
+@media (max-width: 576px) {
+  .photostrip-container {
+    margin: 30px 15px !important;
+    padding: 15px !important;
+    width: calc(100% - 30px) !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  .photo-strip {
+    width: 90% !important;
+    margin: 15px auto !important;
+    padding: 0 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+    border-radius: 8px;
+  }
+  
+  .photostrip-container h3 {
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+  }
+}
+
+/* Fix for iOS Safari viewport issues */
+@supports (-webkit-touch-callout: none) {
+  .photostrip-container {
+    margin: 30px auto !important;
+    width: calc(100% - 40px) !important;
+    padding: 15px !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  .photo-strip {
+    margin: 15px auto !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* Action Buttons */
+.action-buttons button {
+  margin: 5px;
+  padding: 12px 20px;
+  border-radius: 30px;
+}
+
+.action-buttons button:first-child {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.action-buttons button:first-child:hover {
+  background-color: #f1b0b7;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.action-buttons button:nth-child(2) {
+  background-color: #e2e3e5;
+  border-color: #d6d8db;
+  color: #383d41;
+}
+
+.action-buttons button:nth-child(2):hover {
+  background-color: #d6d8db;
+  border-color: #c8cbcf;
+  color: #383d41;
+}
+
+.action-buttons button:last-child {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.action-buttons button:last-child:hover {
+  background-color: #b1dfbb;
+  border-color: #9ecba6;
+  color: #155724;
+}
+
+/* Filter buttons */
+.filters button {
+  padding: 10px 15px;
+  margin: 5px;
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #495057;
+}
+
+.filters button:hover {
+  background: linear-gradient(135deg, #cfe7fa, #6cb2eb) !important;
+  color: #212529;
+  border-color: #6cb2eb;
+}
+
+/* Frame option buttons */
+.frame-options button {
+  padding: 10px 15px;
+  margin: 5px;
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #495057;
+}
+
+.frame-options button:hover {
+  background: linear-gradient(135deg, #d7f3e3, #aedbc6) !important;
+  color: #212529;
+  border-color: #aedbc6;
+}
+
+/* Color option buttons */
+.color-options button {
+  padding: 10px 15px;
+  margin: 5px;
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #495057;
+}
+
+.color-options button:hover {
+  background: linear-gradient(135deg, #e9e9e9, #c8c8c8) !important;
+  color: #212529;
+  border-color: #c8c8c8;
+}
+
+/* Color Picker Styling - New Design */
+.color-section {
+  margin: 10px 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.color-section h4 {
+  font-size: 15px;
+  color: #555;
+  margin: 10px 0 5px 0;
+  font-weight: 500;
+}
+
+.color-grid-container {
+  width: 100%;
+  overflow: hidden;
+  margin: 0 0 0 0;
+  padding: 5px 0;
+  position: relative;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 45px);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 8px;
+  margin: 0 auto;
+  max-width: 100%;
+  width: fit-content;
+}
+
+.color-grid-container::-webkit-scrollbar {
+  display: none;
+}
+
+.color-grid-container::-webkit-scrollbar-track {
+  display: none;
+}
+
+.color-grid-container::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+.color-grid-container::-webkit-scrollbar-thumb:hover {
+  display: none;
+}
+
+.color-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 0 auto;
+  border: 1px solid rgba(0,0,0,0.1);
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.color-circle:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 35px); /* 6 kolom untuk tablet */
+    grid-auto-rows: 35px; /* Pastikan tinggi baris konsisten */
+    gap: 8px;
+    width: fit-content;
+    margin: 0 auto;
+    grid-auto-flow: row;
+  }
+  
+  .color-grid-container {
+    overflow: hidden;
+    padding-bottom: 12px;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+  
+  .color-circle {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .scroll-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 28px); /* 6 kolom untuk mobile kecil */
+    grid-auto-rows: 28px; /* Pastikan tinggi baris konsisten */
+    gap: 5px;
+    width: fit-content;
+    margin: 0 auto;
+    grid-auto-flow: row;
+  }
+  
+  .color-circle {
+    width: 28px; /* Ukuran lebih kecil */
+    height: 28px;
+  }
+  
+  /* Enhance touch interaction for mobile */
+  .color-grid-container {
+    padding: 8px 4px 12px 4px;
+    overflow: hidden;
+  }
+}
+
+.color-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 8px 0 4px 0;
+  font-weight: 500;
+  text-align: center;
+}
+
+.scroll-hint {
+  display: none;
+}
+
+@keyframes fade-in-out {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.photo-container-with-circular {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto;
+  width: 300px;
+  height: 350px;
+}
+
+.circular-text-container {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.home-circular-text {
+  width: 320px;
+  height: 320px;
+  color: #000000;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.home-circular-text span {
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .photo-container-with-circular {
+    width: 250px;
+    height: 300px;
+  }
+  
+  .circular-text-container {
+    width: 280px;
+    height: 280px;
+  }
+  
+  .home-circular-text {
+    width: 280px;
+    height: 280px;
+  }
+  
+  .home-circular-text span {
+    font-size: 14px;
+  }
 }

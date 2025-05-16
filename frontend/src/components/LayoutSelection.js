@@ -47,10 +47,11 @@ const LayoutSelection = ({ setSelectedLayout }) => {
     const boxes = [];
     
     if (layout.arrangement === "single") {
-      // Layout C: only 1 box
+      // Layout C: only 1 box, ditempatkan di bagian atas
       return (
         <div className="single-box-container">
           <div className="pose-box"></div>
+          <div style={{ flex: 1 }}></div>
         </div>
       );
     } else {

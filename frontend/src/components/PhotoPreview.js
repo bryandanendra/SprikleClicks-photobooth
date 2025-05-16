@@ -277,10 +277,15 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
     const imgHeight = 300; // Image height: 300 pixels
     const borderSize = 40;  // Border size: 40 pixels
     const photoSpacing = 20;  // Space between images: 20 pixels
-    const textHeight = 50;   // Text height: 50 pixels
+    let textHeight = 50;   // Text height: 50 pixels
     
     // Get photo count according to layout
     const photoCount = getPhotoCount();
+    
+    // Add extra space at the bottom for Layout C (single photo)
+    if (selectedLayout === "layoutC") {
+      textHeight = 100; // Increase text height for Layout C to add more space
+    }
     
     // Calculate total strip height and width
     const canvasWidth = imgWidth + borderSize * 2;
@@ -289,7 +294,23 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
   
-    ctx.fillStyle = stripColor;
+    // Check if stripColor is a gradient or solid color
+    if (stripColor.startsWith("linear-gradient")) {
+      // Create gradient
+      const gradientColors = stripColor.match(/#[a-fA-F0-9]{6}/g);
+      if (gradientColors && gradientColors.length >= 2) {
+        const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+        gradient.addColorStop(0, gradientColors[0]);
+        gradient.addColorStop(1, gradientColors[1]);
+        ctx.fillStyle = gradient;
+      } else {
+        ctx.fillStyle = "#FFFFFF"; // Default to white if gradient parsing fails
+      }
+    } else {
+      // Use solid color
+      ctx.fillStyle = stripColor;
+    }
+    
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   
     let imagesLoaded = 0;
@@ -307,13 +328,35 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
         hour12: true
       });
       
-      ctx.fillStyle = (stripColor === "black" || stripColor === "800000") ? "#FFFFFF" : "#000000";
+      // Helper function to determine if a color is dark
+      const isDarkColor = (color) => {
+        const darkColors = ["#000000", "#4D4D4D", "#737373", "#A6A6A6", "800000"];
+        return darkColors.includes(color);
+      };
+      
+      // Determine if we need to use white text for dark backgrounds
+      let isDarkBackground = isDarkColor(stripColor);
+      
+      // Check if it's a gradient with dark colors
+      if (stripColor.startsWith("linear-gradient") && !isDarkBackground) {
+        const gradientColors = stripColor.match(/#[a-fA-F0-9]{6}/g);
+        if (gradientColors && gradientColors.some(color => isDarkColor(color))) {
+          isDarkBackground = true;
+        }
+      }
+      
+      ctx.fillStyle = isDarkBackground ? "#FFFFFF" : "#000000";
       ctx.font = "20px Arial";
       ctx.textAlign = "center";
       
-      ctx.fillText("SprinkleClicks  " + timestamp, canvas.width / 2, canvasHeight - borderSize * 1);
+      // Position the text lower for Layout C
+      const textYPosition = selectedLayout === "layoutC" 
+        ? canvasHeight - borderSize * 1.5 
+        : canvasHeight - borderSize * 1;
+      
+      ctx.fillText("SprinkleClicks  " + timestamp, canvas.width / 2, textYPosition);
   
-      ctx.fillStyle = (stripColor === "black" || stripColor === "800000") 
+      ctx.fillStyle = isDarkBackground 
         ? "rgba(255, 255, 255, 0.5)" 
         : "rgba(0, 0, 0, 0.5)";
       ctx.font = "12px Arial";  
@@ -326,7 +369,7 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
       
       // Add layout text
       ctx.font = "16px Arial";
-      ctx.fillStyle = (stripColor === "black" || stripColor === "800000") ? "#FFFFFF" : "#000000";
+      ctx.fillStyle = isDarkBackground ? "#FFFFFF" : "#000000";
       ctx.textAlign = "left";
       
       // Draw the frame if selected
@@ -481,19 +524,57 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
           <h3>Customize your photo strip</h3>
     
           <p className="section-title">Background Color</p>
-          <div className="color-options">
-            <button onClick={() => setStripColor("white")}>White</button>
-            <button onClick={() => setStripColor("black")}>Black</button>
-            <button onClick={() => setStripColor("#f6d5da")}>Pink</button>
-            <button onClick={() => setStripColor("#dde6d5")}>Green</button>
-            <button onClick={() => setStripColor("#adc3e5")}>Blue</button>
-            <button onClick={() => setStripColor("#FFF2CC")}>Yellow</button>
-            <button onClick={() => setStripColor("#dbcfff")}>Purple</button>
-            <button onClick={() => setStripColor("#800000")}>Dark Red</button>
-            <button onClick={() => setStripColor("#845050")}>Burgundy</button>
+          <div className="color-section">
+            {/* <p className="color-subtitle">Solid colors</p> */}
+            <div className="color-grid-container">
+              <div className="color-grid">
+                {/* 16 solid colors (2 baris dengan 8 warna) */}
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#000000" }} onClick={() => setStripColor("#000000")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#4D4D4D" }} onClick={() => setStripColor("#4D4D4D")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#737373" }} onClick={() => setStripColor("#737373")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#A6A6A6" }} onClick={() => setStripColor("#A6A6A6")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#FFFFFF" }} onClick={() => setStripColor("#FFFFFF")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#FF9B9B" }} onClick={() => setStripColor("#FF9B9B")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#F06BF2" }} onClick={() => setStripColor("#F06BF2")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#C270F4" }} onClick={() => setStripColor("#C270F4")}></div>
+                
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#34A8BB" }} onClick={() => setStripColor("#34A8BB")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#54C6DC" }} onClick={() => setStripColor("#54C6DC")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#5FB4F0" }} onClick={() => setStripColor("#5FB4F0")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#224BAF" }} onClick={() => setStripColor("#224BAF")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#20B2AA" }} onClick={() => setStripColor("#20B2AA")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#CEEF70" }} onClick={() => setStripColor("#CEEF70")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#FFEB3B" }} onClick={() => setStripColor("#FFEB3B")}></div>
+                <div className="color-circle" draggable="false" style={{ backgroundColor: "#FFC107" }} onClick={() => setStripColor("#FFC107")}></div>
+              </div>
+            </div>
+            
+            <p className="color-subtitle">Gradients</p>
+            <div className="color-grid-container">
+              <div className="color-grid">
+                {/* 16 gradients (2 baris dengan 8 gradients) */}
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #000000, #737373)" }} onClick={() => setStripColor("linear-gradient(to right, #000000, #737373)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #5F4B26, #A6802D)" }} onClick={() => setStripColor("linear-gradient(to right, #5F4B26, #A6802D)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #DEDEDE, #F5F5F5)" }} onClick={() => setStripColor("linear-gradient(to right, #DEDEDE, #F5F5F5)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #FFF8E5, #FFCCE5)" }} onClick={() => setStripColor("linear-gradient(to right, #FFF8E5, #FFCCE5)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #E0F0FF, #D0F5F5)" }} onClick={() => setStripColor("linear-gradient(to right, #E0F0FF, #D0F5F5)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #FF5B38, #FF965B)" }} onClick={() => setStripColor("linear-gradient(to right, #FF5B38, #FF965B)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #FF4A68, #9140FF)" }} onClick={() => setStripColor("linear-gradient(to right, #FF4A68, #9140FF)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #9C40FF, #624AF5)" }} onClick={() => setStripColor("linear-gradient(to right, #9C40FF, #624AF5)")}></div>
+                
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #5680FB, #53CAFF)" }} onClick={() => setStripColor("linear-gradient(to right, #5680FB, #53CAFF)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #624AF5, #50E0AE)" }} onClick={() => setStripColor("linear-gradient(to right, #624AF5, #50E0AE)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #37CF89, #59F7A8)" }} onClick={() => setStripColor("linear-gradient(to right, #37CF89, #59F7A8)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #53D9EF, #F0E668)" }} onClick={() => setStripColor("linear-gradient(to right, #53D9EF, #F0E668)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #FFC857, #FFE2A0)" }} onClick={() => setStripColor("linear-gradient(to right, #FFC857, #FFE2A0)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #FFA7C3, #FF5B99)" }} onClick={() => setStripColor("linear-gradient(to right, #FFA7C3, #FF5B99)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #6366F1, #A855F7)" }} onClick={() => setStripColor("linear-gradient(to right, #6366F1, #A855F7)")}></div>
+                <div className="color-circle" draggable="false" style={{ background: "linear-gradient(to right, #14B8A6, #84CC16)" }} onClick={() => setStripColor("linear-gradient(to right, #14B8A6, #84CC16)")}></div>
+              </div>
+            </div>
           </div>
     
-          <p className="section-title">Stickers</p>
+          {/* <p className="section-title">Stickers</p>
           <div className="frame-options">
             <button onClick={() => setSelectedFrame("none")}>No Stickers</button>
             <button onClick={() => setSelectedFrame("pastel")}>Girlypop</button>
@@ -506,12 +587,29 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
                 <button onClick={() => setSelectedFrame("messBoothImage")}>Mess Booth</button>
               </>
             )}
-          </div>
+          </div> */}
         </div>
         
-        <div className="photostrip-container" style={{ margin: "20px auto", textAlign: "center" }}>
+        <div className="photostrip-container" style={{ 
+          margin: "40px auto", 
+          textAlign: "center",
+          padding: "20px 0",
+          background: "transparent",
+          borderRadius: "0",
+          boxShadow: "none" 
+        }}>
           <h3>Your Photo Strip</h3>
-          <canvas ref={stripCanvasRef} className="photo-strip" style={{ maxWidth: "100%", boxShadow: "0 4px 8px rgba(0,0,0,0.2)" }} />
+          <canvas 
+            ref={stripCanvasRef} 
+            className="photo-strip" 
+            style={{ 
+              maxWidth: "90%", 
+              margin: "20px auto",
+              display: "block",
+              boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
+              borderRadius: "8px"
+            }} 
+          />
         </div>
     
         <div className="control-section">
@@ -568,5 +666,4 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
     </div>
   );
 };
-
 export default PhotoPreview;
