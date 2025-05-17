@@ -480,7 +480,7 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
       // Add a timeout to ensure UI updates before the network request
       setTimeout(async () => {
         try {
-          const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+          const BACKEND_URL = "https://sprikle-clicks-backrender.vercel.app";
           
           // Step 2: Send the optimized image to the server
           const response = await axios.post(`${BACKEND_URL}/generate-qr-code`, {
@@ -615,7 +615,7 @@ const PhotoPreview = ({ capturedImages, selectedLayout = "layoutA" }) => {
         <div className="control-section">
           <div className="action-buttons">
             <button onClick={downloadPhotoStrip}>📥 Download Photo</button>
-            <button onClick={generateQRCode} disabled={true}>
+            <button onClick={generateQRCode}>
               {isGeneratingQR ? "Generating..." : "🔗 Download via QR Code"}
             </button>
             <button onClick={() => navigate("/photobooth")}>🔄 Take New Photos</button>

@@ -1,5 +1,0 @@
-.env
-node_modules/
-uploads/
-saved_emails/
-.DS_Store

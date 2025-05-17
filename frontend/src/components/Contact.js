@@ -22,7 +22,7 @@ const Contact = () => {
     setIsSubmitting(true);
     setStatus('Sending message...');
     try {
-      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+      const BACKEND_URL = "https://sprikle-clicks-backrender.vercel.app";
       console.log("Sending to backend URL:", BACKEND_URL);
       
       if (!formData.name || !formData.email || !formData.message) {
